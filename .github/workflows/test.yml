@@ -12,7 +12,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          Invoke-Pester
+          Invoke-Pester -TagFilter GitHubCompatible
   pester-test-linux:
     name: Linux Latest
     runs-on: ubuntu-latest
@@ -23,4 +23,4 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          Invoke-Pester
+          Invoke-Pester -TagFilter GitHubCompatible

@@ -2,10 +2,9 @@ name: PSGallery Publish
 env:
  PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
 on:
-  workflow_dispatch:
-#  push:
-#    branches:
-#      - main
+  push:
+    branches:
+      - main
 
 jobs:
   publish-to-psgallery:

@@ -69,6 +69,22 @@ function Get-TokenColor {
     return $ForegroundRgb
 }
 
+function Set-CursorVisible {
+    <#
+        .SYNOPSIS
+            Shows/hides the terminal cursor to help with smoother animations.
+    #>
+    param (
+        # Whether to show the cursor or hide it, defaults to show
+        [bool] $CursorVisible = $true
+    )
+    try {
+        [Console]::CursorVisible = $CursorVisible
+    } catch {
+        # Doesn't work in unit tests and it's not super necessary
+    }
+}
+
 function Write-Token {
     <#
         .SYNOPSIS
@@ -122,7 +138,7 @@ function Write-Token {
         $initialCursorSetting = $true
     }
     $initialCursorPosition = $Host.UI.RawUI.CursorPosition
-    [Console]::CursorVisible = $false
+    Set-CursorVisible $false
     try {
         $textToRender = @()
         # Overruns are parts of this extent that extend beyond the width of the terminal and need their own line wrapping
@@ -169,7 +185,7 @@ function Write-Token {
     } catch {
         throw $_
     } finally {
-        [Console]::CursorVisible = $initialCursorSetting
+        Set-CursorVisible $initialCursorSetting
         [Console]::SetCursorPosition($initialCursorPosition.X, $initialCursorPosition.Y)
     }
 }
