@@ -83,17 +83,17 @@ Describe "Testing Write-Codeblock function" {
             "Write-Output 'Hello, World!'" | Write-Codeblock
         }
 
-        It "Should throw error when unsupported theme is provided" {
+        It "Should throw error when unsupported theme is provided" -Tag GitHubCompatible {
             $errorRecord = { Write-Codeblock -Text "Write-Output 'Hello, World!'" -Theme "UnsupportedTheme" } | Should -Throw -PassThru
             $errorRecord.Exception.Message | Should -Match "Cannot validate argument on parameter 'Theme'"
         }
 
-        It "Should throw error when no code text is provided" {
+        It "Should throw error when no code text is provided" -Tag GitHubCompatible {
             $errorRecord = { Write-Codeblock $null } | Should -Throw -PassThru
             $errorRecord.Exception.Message | Should -Match "Cannot bind argument to parameter 'Text' because it is null.|Cannot bind argument to parameter 'Text' because it is an empty string."
         }
 
-        It "Should throw error when no code text is provided as a pipeline parameter" {
+        It "Should throw error when no code text is provided as a pipeline parameter" -Tag GitHubCompatible {
             $errorRecord = { Write-Codeblock $null } | Should -Throw -PassThru
             $errorRecord.Exception.Message | Should -Match "Cannot bind argument to parameter 'Text' because it is null.|Cannot bind argument to parameter 'Text' because it is an empty string."
         }
