@@ -6,6 +6,8 @@
 
 PwshSyntaxHighlight is a simple syntax highlighter for rendering PowerShell code blocks inside the terminal. This is a standalone version of the codeblock renderer I built for [PowerShell AI](https://github.com/dfinke/PowerShellAI).
 
+![image](https://github.com/ShaunLawrie/PwshSyntaxHighlight/assets/13159458/9b3f4a2d-79c0-4446-aeea-6553b830a819)
+
 # Install
 
 ```pwsh
