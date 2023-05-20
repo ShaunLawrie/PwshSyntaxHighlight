@@ -17,7 +17,7 @@
             Tags = @("Windows", "Linux")
             LicenseUri = 'https://github.com/ShaunLawrie/PwshSyntaxHighlight/blob/main/LICENSE.md'
             ProjectUri = 'https://github.com/ShaunLawrie/PwshSyntaxHighlight'
-            IconUri = 'https://shaunlawrie.com/images/PwshSyntaxHighlight.png'
+            IconUri = 'https://shaunlawrie.com/images/pwshsyntaxhighlight.png'
         }
     }
 }
