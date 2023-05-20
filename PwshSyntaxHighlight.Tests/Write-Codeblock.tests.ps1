@@ -1,6 +1,5 @@
 Import-Module "$PSScriptRoot\..\PwshSyntaxHighlight.psd1" -Force
 $preTestThemes = $null
-$preTestBufferSize = $null
 
 Describe "Testing Write-Codeblock function" {
 
@@ -21,12 +20,10 @@ Describe "Testing Write-Codeblock function" {
                     BackgroundRgb = @{ R = 255; G = 255; B = 255 }
                 }
             };
-            [Console]::SetBufferSize(800, 600)
         }
 
         AfterAll {
             $script:Themes = $preTestThemes
-            [Console]::SetBufferSize($preTestBufferSize.Width, $preTestBufferSize.Height)
         }
 
         It "Should write a simple codeblock with no line numbers" {
