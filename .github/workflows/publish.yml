@@ -16,4 +16,4 @@ jobs:
       - name: Deploy Package
         shell: pwsh
         run: |
-          Publish-Module -Path "./PwshSyntaxHighlight.psd1" -NugetApiKey $env:PSGALLERY_API_KEY
+          Publish-Module -Path "." -NugetApiKey $env:PSGALLERY_API_KEY
