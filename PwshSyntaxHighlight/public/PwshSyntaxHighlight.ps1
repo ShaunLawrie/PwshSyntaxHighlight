@@ -72,7 +72,7 @@ function Write-Codeblock {
     $codeWidth = $Host.UI.RawUI.WindowSize.Width - $gutterSize
 
     try {
-        [Console]::CursorVisible = $false
+        Set-CursorVisible $false
         
         $functionLineNumber = 1
         $resetEscapeCode = "$([Char]27)[0m"
@@ -135,6 +135,6 @@ function Write-Codeblock {
     } catch {
         throw $_
     } finally {
-        [Console]::CursorVisible = $true
+        Set-CursorVisible
     }
 }
