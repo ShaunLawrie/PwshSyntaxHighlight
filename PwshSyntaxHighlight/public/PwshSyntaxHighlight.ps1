@@ -102,6 +102,8 @@ function Write-Codeblock {
         [string] $Theme = "Github"
     )
 
+    cls
+
     $ForegroundRgb = $script:Themes[$Theme].ForegroundRgb
     $BackgroundRgb = $script:Themes[$Theme].BackgroundRgb
 
