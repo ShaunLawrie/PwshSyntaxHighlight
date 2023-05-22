@@ -8,7 +8,7 @@
     PowerShellVersion = '5.0'
     PowerShellHostName = 'ConsoleHost'
     RootModule = 'PwshSyntaxHighlight'
-    FunctionsToExport = @('Write-Codeblock')
+    FunctionsToExport = @('Write-Codeblock' , 'Capture-Screenshot')
     CmdletsToExport = @()
     VariablesToExport = '*'
     AliasesToExport = @()
