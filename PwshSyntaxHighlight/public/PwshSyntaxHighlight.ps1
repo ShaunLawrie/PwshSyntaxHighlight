@@ -27,6 +27,45 @@ $script:Themes = @{
     }
 }
 
+function Capture-Screenshot {
+    param (
+        [string]$path = "$home\downloads\screenshot.png"
+    )
+
+    Add-Type -TypeDefinition @"
+        using System;
+        using System.Runtime.InteropServices;
+
+        public class User32 {
+            [DllImport("user32.dll")]
+            public static extern IntPtr GetForegroundWindow();
+
+            [DllImport("user32.dll")]
+            public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+            public struct RECT {
+                public int Left;
+                public int Top;
+                public int Right;
+                public int Bottom;
+            }
+        }
+"@
+
+    $window = [User32]::GetForegroundWindow()
+    $windowRect = New-Object User32+RECT
+    [User32]::GetWindowRect($window, [ref]$windowRect)
+
+    $bounds = [Drawing.Rectangle]::FromLTRB($windowRect.Left, $windowRect.Top, $windowRect.Right, $windowRect.Bottom)
+    $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height
+    $graphics = [Drawing.Graphics]::FromImage($bmp)
+    $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.Size)
+
+    $bmp.Save($path)
+    $graphics.Dispose()
+    $bmp.Dispose()
+}
+
 function Write-Codeblock {
     <#
         .SYNOPSIS
@@ -51,7 +90,9 @@ function Write-Codeblock {
         # Show a gutter with line numbers
         [switch] $ShowLineNumbers,
         # Syntax highlight the code block
-        [switch] $SyntaxHighlight,
+        [switch] $ScreenShot,
+        # Capture ScreenShot of output and save to downloads
+        [switch] $SyntaxHighlight,        
         # Extents to highlight in the code block
         [array] $HighlightExtents,
         # Lines to highlight in the code block
@@ -136,5 +177,6 @@ function Write-Codeblock {
         throw $_
     } finally {
         Set-CursorVisible
+        if ($ScreenShot) { Capture-Screenshot }
     }
 }
