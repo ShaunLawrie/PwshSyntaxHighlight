@@ -73,3 +73,16 @@ $extents = $astItems | Select-Object -ExpandProperty Extent
 $sampleCode | Write-CodeBlock -HighlightExtents $extents -ShowLineNumbers
 ```
 ![Example of syntax highlighting](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample3.png)
+
+## 6. Export Screenshots (Windows Only)
+
+[@I_Am_Jakoby](https://twitter.com/I_Am_Jakoby/status/1660673439705837570) added the ability to take screenshots when this is run from a Windows based terminal 🤙  
+Use `-ClearHost` and `-ScreenShot` to clear the host, and save an image of the terminal window.
+
+```pwsh
+Write-CodeBlock $sampleCode -HighlightLines 2, 3, 4 -ShowLineNumbers
+```
+![Example of screenshot](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample5.png)
+
+Will save a file that looks a bit like this:  
+![Example of screenshot output](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample6.png)

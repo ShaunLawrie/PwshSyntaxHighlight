@@ -27,50 +27,96 @@ $script:Themes = @{
     }
 }
 
-function Capture-Screenshot {
+function Export-Screenshot {
     param (
-        [string]$path = "$home\downloads\screenshot.png"
+        [string] $Path
     )
 
-    Add-Type -TypeDefinition @"
-        using System;
-        using System.Runtime.InteropServices;
+    if(-not($IsWindows -or $null -eq $IsWindows)) {
+        Write-Warning "Screenshots are only supported on Windows"
+        return
+    }
 
-        public class User32 {
-            [DllImport("user32.dll")]
-            public static extern IntPtr GetForegroundWindow();
+    if (-not ([System.Management.Automation.PSTypeName]'User32').Type) {
+        Add-Type -TypeDefinition @"
+            using System;
+            using System.Runtime.InteropServices;
 
-            [DllImport("user32.dll")]
-            public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+            public class User32 {
+                [DllImport("user32.dll")]
+                public static extern IntPtr GetForegroundWindow();
 
-            public struct RECT {
-                public int Left;
-                public int Top;
-                public int Right;
-                public int Bottom;
+                [DllImport("user32.dll")]
+                public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+                public struct RECT {
+                    public int Left;
+                    public int Top;
+                    public int Right;
+                    public int Bottom;
+                }
             }
-        }
 "@
+    }
 
     $window = [User32]::GetForegroundWindow()
     $windowRect = New-Object User32+RECT
-    [User32]::GetWindowRect($window, [ref]$windowRect)
-
+    [User32]::GetWindowRect($window, [ref]$windowRect) | Out-Null
+    
     $bounds = [Drawing.Rectangle]::FromLTRB($windowRect.Left, $windowRect.Top, $windowRect.Right, $windowRect.Bottom)
-    $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height
-    $graphics = [Drawing.Graphics]::FromImage($bmp)
-    $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.Size)
 
-    $bmp.Save($path)
-    $graphics.Dispose()
-    $bmp.Dispose()
+    try {
+        $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height
+        $graphics = [Drawing.Graphics]::FromImage($bmp)
+        $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.Size)
+
+        if([string]::IsNullOrWhiteSpace($Path)) {
+            $suggestedFilename = "screenshot1.png"
+
+            $picturesDir = "C:\Users\shaun.lawrie\Pictures" #[Environment]::GetFolderPath("MyPictures")
+            if($null -eq $picturesDir) {
+                $picturesDir = [Environment]::GetFolderPath("MyDocuments")
+            }
+            $screenshotsDirectory = Join-Path $picturesDir "Screenshots"
+            if(!(Test-Path $screenshotsDirectory)) {
+                New-Item -Path $screenshotsDirectory -ItemType Directory -Force | Out-Null
+            }
+            $Path = Join-Path $screenshotsDirectory $SuggestedFilename
+            $suffix = 1
+            while((Test-Path -Path $Path) -and $suffix -le 1000) {
+                $Path = $Path -replace '[0-9]+\.png$', "$suffix.png"
+                $suffix++
+            }
+        }
+
+        while($true) {
+            Set-CursorVisible
+            $finalDestination = Read-Host -Prompt "Enter a location to save or press enter for the default ($Path)"
+            if([string]::IsNullOrEmpty($finalDestination)) {
+                $finalDestination = $Path
+            }
+
+            if(Test-Path $finalDestination) {
+                Write-Warning "There is already a file at '$finalDestination', try another file path to export the image to."
+            } else {
+                try {
+                    $bmp.Save($finalDestination)
+                    break
+                } catch {
+                    Write-Warning "Failed to save as '$finalDestination', try another file path to export the image to."
+                }
+            }
+        }
+    } finally {
+        $graphics.Dispose()
+        $bmp.Dispose()
+    }
 }
 
 function Write-Codeblock {
     <#
         .SYNOPSIS
             Writes a code block to the host.
-            Intended for internal use only when you want to show a code block with some nicer formatting.
 
         .DESCRIPTION
             The Write-Codeblock function outputs a code block to the host console with optional line numbers,
@@ -91,6 +137,8 @@ function Write-Codeblock {
         [switch] $ShowLineNumbers,
         # Syntax highlight the code block
         [switch] $ScreenShot,
+        # Clear host before showing the code block
+        [switch] $ClearHost,
         # Capture ScreenShot of output and save to downloads
         [switch] $SyntaxHighlight,        
         # Extents to highlight in the code block
@@ -102,7 +150,9 @@ function Write-Codeblock {
         [string] $Theme = "Github"
     )
 
-    cls
+    if($ClearHost) {
+        Clear-Host
+    }
 
     $ForegroundRgb = $script:Themes[$Theme].ForegroundRgb
     $BackgroundRgb = $script:Themes[$Theme].BackgroundRgb
@@ -178,7 +228,7 @@ function Write-Codeblock {
     } catch {
         throw $_
     } finally {
+        if ($ScreenShot) { Export-Screenshot }
         Set-CursorVisible
-        if ($ScreenShot) { Capture-Screenshot }
     }
 }
