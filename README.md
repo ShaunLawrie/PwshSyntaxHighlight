@@ -80,7 +80,7 @@ $sampleCode | Write-CodeBlock -HighlightExtents $extents -ShowLineNumbers
 Use `-ClearHost` and `-ScreenShot` to clear the host, and save an image of the terminal window.
 
 ```pwsh
-Write-CodeBlock $sampleCode -HighlightLines 2, 3, 4 -ShowLineNumbers
+Write-CodeBlock $sampleCode -SyntaxHighlight -ShowLineNumbers -ClearHost -ScreenShot
 ```
 ![Example of screenshot](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample5.png)
 
