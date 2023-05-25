@@ -1,12 +1,12 @@
 @{
-    ModuleVersion = '1.1.1'
+    ModuleVersion = '1.1.2'
     GUID = '737bad60-8047-480d-bf3e-944f1a4576fc'
     Author = 'Shaun Lawrie'
     CompanyName = 'Shaun Lawrie'
     Copyright = '(c) Shaun Lawrie. All rights reserved.'
     Description = 'A code block renderer for PowerShell code in the terminal'
     RootModule = 'PwshSyntaxHighlight'
-    FunctionsToExport = @('Write-Codeblock' , 'Export-Screenshot')
+    FunctionsToExport = @('Write-Codeblock' , 'Export-Screenshot' , 'Export-ScreenshotAsHtml')
     CmdletsToExport = @()
     VariablesToExport = '*'
     AliasesToExport = @()

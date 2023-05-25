@@ -27,6 +27,158 @@ $script:Themes = @{
     }
 }
 
+# TODO Update this to export correct colors when implementing https://github.com/ShaunLawrie/PwshSyntaxHighlight/issues/2
+function Export-ScreenshotAsHtml
+{
+    param(
+        $Path,
+        $GutterSize = 0,
+        $StartLine = 0,
+        $EndLine = $Host.UI.RawUI.WindowSize.Height
+    )
+
+    Begin
+    {
+        if(-not($IsWindows -or $null -eq $IsWindows)) {
+            return
+        }
+
+        # Required by HttpUtility
+        Add-Type -Assembly System.Web
+        $raw = $Host.UI.RawUI
+        $buffsz = $raw.BufferSize
+
+        function BuildHtml($out, $buff, $gutterSize)
+        {
+            function OpenElement($out, $fore, $back, $disableSelection)
+            {
+                & {
+                    $out.Append('<span class="')
+                    if($fore) {
+                        $out.Append(' F').Append($fore)
+                    }
+                    if($back) {
+                        $out.Append(' B').Append($back)
+                    }
+                    if($disableSelection) {
+                        $out.Append(' no-select')
+                    }
+                    $out.Append('">')
+                } | out-null
+            }
+
+            function CloseElement($out) {
+                $out.Append('</span>') | out-null
+            }
+
+            $height = $buff.GetUpperBound(0)
+            $width  = $buff.GetUpperBound(1)
+
+            $prev = $null
+            $whitespaceCount = 0
+
+            $out.Append("<pre class=`"B$($Host.UI.RawUI.BackgroundColor)`">") | out-null
+
+            for ($y = 0; $y -lt $height; $y++)
+            {
+                for ($x = 0; $x -lt $width; $x++)
+                {
+                    $current = $buff[$y, $x]
+
+                    if($x -lt $gutterSize -and $gutterSize -gt 0) {
+                        $disableSelection = $false
+                        OpenElement $out $current.ForegroundColor $current.BackgroundColor $true
+                        $out.Append($current.Character.ToString()) | out-null
+                        CloseElement $out
+                    } else {
+                        if ($current.Character -eq ' ')
+                        {
+                            $whitespaceCount++
+                            write-debug "whitespaceCount: $whitespaceCount"
+                        }
+                        else
+                        {
+                            if ($whitespaceCount)
+                            {
+                                write-debug "appended $whitespaceCount spaces, whitespaceCount: 0"
+                                $out.Append((new-object string ' ', $whitespaceCount)) | Out-Null
+                                $whitespaceCount = 0
+                            }
+
+                            if ((-not $prev) -or
+                                ($prev.ForegroundColor -ne $current.ForegroundColor) -or
+                                ($prev.BackgroundColor -ne $current.BackgroundColor))
+                            {
+                                if ($prev) { CloseElement $out }
+
+                                OpenElement $out $current.ForegroundColor $current.BackgroundColor $false
+                            }
+
+                            $char = [System.Web.HttpUtility]::HtmlEncode($current.Character)
+                            $out.Append($char) | out-null
+                            $prev = $current
+                        }
+                    }
+                }
+
+                $out.Append("`n") | out-null
+                $whitespaceCount = 0
+            }
+
+            if($prev) { CloseElement $out }
+
+            $out.Append('</pre>') | out-null
+        }
+    }
+
+    Process
+    {
+        if(-not($IsWindows -or $null -eq $IsWindows)) {
+            Write-Warning "Saving HTML is only supported on Windows"
+            return
+        }
+
+        $topLeft = new-object System.Management.Automation.Host.Coordinates 0, $StartLine
+        $bottomRight = new-object System.Management.Automation.Host.Coordinates $buffsz.Width, $EndLine
+        $rect = new-object Management.Automation.Host.Rectangle $topLeft, $bottomRight
+        $buff = $raw.GetBufferContents($rect)
+
+        $out = new-object Text.StringBuilder
+        BuildHtml $out $buff $GutterSize
+        
+        $cssOut = new-object Text.StringBuilder
+        $cssOut.Append('<style>  .no-select { -webkit-user-select: none; -ms-user-select: none; user-select: none; }') | Out-Null
+        [Enum]::GetValues([ConsoleColor]) | Foreach {
+            $cssOut.Append("  .F$_ { color: $_; }") | Out-Null
+            $cssOut.Append("  .B$_ { background-color: $_; }") | Out-Null
+        }
+        $cssOut.Append('</style>') | Out-Null
+        
+        $completeOutput = $cssOut.ToString() + $out.ToString()
+
+        $Path = New-SavePath -Path $Path -TemplateFilename "web1" -TemplateExtension ".html"
+
+        while($true) {
+            Set-CursorVisible
+            $finalDestination = Read-Host -Prompt "Enter a location to save or press enter for the default ($Path)"
+            if([string]::IsNullOrEmpty($finalDestination)) {
+                $finalDestination = $Path
+            }
+
+            if(Test-Path $finalDestination) {
+                Write-Warning "There is already a file at '$finalDestination', try another file path to export the image to."
+            } else {
+                try {
+                    Set-Content -Path $finalDestination -Value $completeOutput
+                    break
+                } catch {
+                    Write-Warning "Failed to save as '$finalDestination', try another file path to export the image to."
+                }
+            }
+        }
+    }
+}
+
 function Export-Screenshot {
     param (
         [string] $Path
@@ -70,24 +222,7 @@ function Export-Screenshot {
         $graphics = [Drawing.Graphics]::FromImage($bmp)
         $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.Size)
 
-        if([string]::IsNullOrWhiteSpace($Path)) {
-            $suggestedFilename = "screenshot1.png"
-
-            $picturesDir = "C:\Users\shaun.lawrie\Pictures" #[Environment]::GetFolderPath("MyPictures")
-            if($null -eq $picturesDir) {
-                $picturesDir = [Environment]::GetFolderPath("MyDocuments")
-            }
-            $screenshotsDirectory = Join-Path $picturesDir "Screenshots"
-            if(!(Test-Path $screenshotsDirectory)) {
-                New-Item -Path $screenshotsDirectory -ItemType Directory -Force | Out-Null
-            }
-            $Path = Join-Path $screenshotsDirectory $SuggestedFilename
-            $suffix = 1
-            while((Test-Path -Path $Path) -and $suffix -le 1000) {
-                $Path = $Path -replace '[0-9]+\.png$', "$suffix.png"
-                $suffix++
-            }
-        }
+        $Path = New-SavePath -Path $Path
 
         while($true) {
             Set-CursorVisible
@@ -137,9 +272,11 @@ function Write-Codeblock {
         [switch] $ShowLineNumbers,
         # Syntax highlight the code block
         [switch] $ScreenShot,
-        # Clear host before showing the code block
-        [switch] $ClearHost,
         # Capture ScreenShot of output and save to downloads
+        [switch] $ClearHost,
+        # Clear host before showing the code block
+        [switch] $Html,
+        # Generate HTML render
         [switch] $SyntaxHighlight,        
         # Extents to highlight in the code block
         [array] $HighlightExtents,
@@ -150,8 +287,11 @@ function Write-Codeblock {
         [string] $Theme = "Github"
     )
 
+    $startLine = 0
     if($ClearHost) {
         Clear-Host
+    } else {
+        $startLine = $Host.UI.RawUI.CursorPosition.Y
     }
 
     $ForegroundRgb = $script:Themes[$Theme].ForegroundRgb
@@ -167,6 +307,7 @@ function Write-Codeblock {
     try {
         Set-CursorVisible $false
         
+        $renderedLines = 0
         $functionLineNumber = 1
         $resetEscapeCode = "$([Char]27)[0m"
         $foregroundColorEscapeCode = "$([Char]27)[38;2;{0};{1};{2}m" -f $ForegroundRgb.R, $ForegroundRgb.G, $ForegroundRgb.B
@@ -203,10 +344,12 @@ function Write-Codeblock {
                 [Console]::WriteLine($lineBackground + ($wrappedLinesBackground * ($wrappedLineSegments.Count - 1)))
                 # Correct terminal line position if the window scrolled
                 $terminalLine = $Host.UI.RawUI.CursorPosition.Y - $wrappedLineSegments.Count
+                $renderedLines += $wrappedLineSegments.Count
             } else {
                 # Render the background
                 [Console]::WriteLine($lineBackground)
                 $terminalLine = $Host.UI.RawUI.CursorPosition.Y - 1
+                $renderedLines++
             }
 
             # Render the tokens that are on this line
@@ -229,6 +372,14 @@ function Write-Codeblock {
         throw $_
     } finally {
         if ($ScreenShot) { Export-Screenshot }
+        if ($Html) {
+            $endLine = $Host.UI.RawUI.CursorPosition.Y
+            $startLine = $endLine - $renderedLines
+            Export-ScreenshotAsHtml -StartLine $startLine -EndLine $endLine -GutterSize $gutterSize
+            if($renderedLines -gt $Host.UI.RawUI.BufferSize.Height - 1) {
+                Write-Warning "Html will be truncated because the code block was taller than the terminal"
+            }
+        }
         Set-CursorVisible
     }
 }

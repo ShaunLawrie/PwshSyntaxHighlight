@@ -74,7 +74,7 @@ $sampleCode | Write-CodeBlock -HighlightExtents $extents -ShowLineNumbers
 ```
 ![Example of syntax highlighting](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample3.png)
 
-## 6. Export Screenshots (Windows Only)
+## 6. Export Screenshots as PNG (Windows Only)
 
 [@I_Am_Jakoby](https://twitter.com/I_Am_Jakoby/status/1660673439705837570) added the ability to take screenshots when this is run from a Windows based terminal 🤙  
 Use `-ClearHost` and `-ScreenShot` to clear the host, and save an image of the terminal window.
@@ -84,5 +84,19 @@ Write-CodeBlock $sampleCode -SyntaxHighlight -ShowLineNumbers -ClearHost -Screen
 ```
 ![Example of screenshot](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample5.png)
 
-Will save a file that looks a bit like this:  
+The screenshot will include the window border and look a bit like this:  
 ![Example of screenshot output](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample6.png)
+
+## 7. Export Screenshots as HTML (Windows Only)
+
+Another [@I_Am_Jakoby](https://twitter.com/I_Am_Jakoby) special 🙏  
+Use `-Html` to save the code block as an html document.  
+
+```pwsh
+Write-CodeBlock $sampleCode -SyntaxHighlight -ShowLineNumbers -Html
+```
+![Example of html command](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample7.png)
+
+The command will save an HTML file you can open in your browser:  
+![Example of html output](/PwshSyntaxHighlight/private/PwshSyntaxHighlightExample8.png)
+*The colors don't match what you see in the terminal which will be corrected with https://github.com/ShaunLawrie/PwshSyntaxHighlight/issues/2*
